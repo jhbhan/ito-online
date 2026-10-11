@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "starter",
+  "name": "Little questions",
+  "prompts": [
+    { "id": "animal-scariness", "text": "How scary is this animal?", "lowLabel": "Not scary at all", "highLabel": "Absolutely terrifying", "category": "Animals" },
+    { "id": "food-popularity", "text": "How popular is this food?", "lowLabel": "Almost nobody likes it", "highLabel": "Almost everyone likes it", "category": "Food" },
+    { "id": "movie-cry", "text": "How likely is this movie to make you cry?", "lowLabel": "Not a tear in sight", "highLabel": "Full-on sobbing", "category": "Movies" },
+    { "id": "weekend-energy", "text": "How much energy does this weekend plan take?", "lowLabel": "Couch mode", "highLabel": "Need a vacation after", "category": "Everyday" },
+    { "id": "superpower", "text": "How useful would this superpower be?", "lowLabel": "Mostly a party trick", "highLabel": "Changes the world", "category": "Imagination" },
+    { "id": "awkwardness", "text": "How awkward would this moment be?", "lowLabel": "Barely noticeable", "highLabel": "Think about it for years", "category": "Everyday" },
+    { "id": "snack-craving", "text": "How badly do you want this snack right now?", "lowLabel": "Could take it or leave it", "highLabel": "Hand it over immediately", "category": "Food" },
+    { "id": "adventure", "text": "How adventurous is this trip?", "lowLabel": "Familiar and easy", "highLabel": "No plan, deep wilderness", "category": "Travel" }
+  ]
+}

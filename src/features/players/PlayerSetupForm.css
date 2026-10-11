@@ -1,0 +1,23 @@
+.cards-per-player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  margin-top: 24px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #eeeee5;
+}
+.cards-per-player>div:first-child { display: grid; gap: 6px; }
+.cards-per-player>div:first-child strong { font: 600 16px/1.5 var(--display); }
+.cards-per-player>div:first-child span { font-size: 13px; color: var(--muted); }
+.card-count-control { display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
+.card-count-control button { width: 44px; height: 44px; border: 1px solid #cfd4c3; border-radius: 50%; background: var(--white); color: #45543b; font-size: 21px; line-height: 1; }
+.card-count-control button:hover:not(:disabled) { background: #e4ecd8; border-color: #819a60; }
+.card-count-control button:disabled { color: #9ba48f; background: #e6e7df; cursor: not-allowed; }
+.card-count-control strong { min-width: 20px; text-align: center; font: 700 20px var(--display); }
+@media (max-width: 540px) {
+  .cards-per-player { align-items: flex-start; flex-direction: column; padding: 20px; gap: 18px; }
+  .card-count-control { align-self: flex-end; }
+}

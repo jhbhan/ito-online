@@ -1,0 +1,21 @@
+.reveal-caption { margin: 24px 0 16px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.horizontal-reveal {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  overflow-x: auto;
+  padding: 4px 2px 18px;
+  scroll-snap-type: x proximity;
+}
+.horizontal-reveal .reveal-row { flex: 0 0 192px; min-width: 0; margin: 0; animation: appear .25s both; scroll-snap-align: start; }
+.horizontal-reveal .reveal-card { min-height: 174px; height: 100%; display: flex; align-items: flex-start; flex-direction: column; gap: 10px; padding: 20px; }
+.horizontal-reveal .reveal-card .sort-card-name { margin: 2px 0 0; }
+.horizontal-reveal .reveal-card strong { font: 700 19px/1.4 var(--display); overflow-wrap: anywhere; }
+.reveal-screen .result-note { margin: 16px 0 24px; }
+.reveal-screen .true-order>div { display: flex; gap: 12px; overflow-x: auto; padding: 14px 2px 16px; }
+.reveal-screen .true-order>div>span { flex: 0 0 176px; background: #e9eddf; color: #35452a; border: 1px solid #d8e0ca; border-radius: 10px; padding: 16px; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 540px) {
+  .horizontal-reveal .reveal-row { flex-basis: 174px; }
+  .horizontal-reveal .reveal-card { padding: 18px; min-height: 164px; }
+  .horizontal-reveal .reveal-card strong { font-size: 18px; }
+}
