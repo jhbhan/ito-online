@@ -1,7 +1,7 @@
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-type Action = 'create' | 'join' | 'snapshot' | 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave';
+type Action = 'create' | 'join' | 'snapshot' | 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave' | 'close';
 type Payload = {
   action?: Action; roomId?: string; code?: string; name?: string; token?: string;
   promptText?: string; lowLabel?: string; highLabel?: string; cardsPerPlayer?: number;
@@ -125,7 +125,11 @@ export default async (request: Request) => {
     }
     const { member, room } = await getMember(db, payload);
     if (payload.action === 'snapshot') return json(await snapshot(db, room, member));
-    if (payload.action === 'settings') {
+    if (payload.action === 'close') {
+      hostOnly(room, member);
+      const result = await db.rpc('ito_close_room', { p_room_id: room.id, p_host_id: member.id });
+      if (result.error) throw new Error(result.error.message);
+    } else if (payload.action === 'settings') {
       hostOnly(room, member);
       if (room.status !== 'lobby') return fail('Settings can only change in the lobby.');
       const promptText = text(payload.promptText, 120);

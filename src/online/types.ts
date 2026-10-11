@@ -1,5 +1,5 @@
 export type OnlineSession = { roomId: string; token: string; code: string };
-export type RoomStatus = 'lobby' | 'entry' | 'sorting' | 'revealing' | 'results';
+export type RoomStatus = 'lobby' | 'entry' | 'sorting' | 'revealing' | 'results' | 'closed';
 export type OnlinePlayer = { id: string; name: string; active: boolean; joined_at: string };
 export type OnlineCard = {
   id: string; ownerId: string; slot: number; position: number; submitted: boolean;

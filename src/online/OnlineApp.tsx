@@ -40,14 +40,24 @@ function LobbySettings({ snapshot, busy, onSave, onStart }: { snapshot: OnlineSn
   const [cardsPerPlayer, setCardsPerPlayer] = useState(room.cardsPerPlayer);
   const allValid = promptText.trim() && lowLabel.trim() && highLabel.trim() && cardsPerPlayer >= 1 && cardsPerPlayer <= 5;
   const changed = promptText.trim() !== room.promptText || lowLabel.trim() !== room.lowLabel || highLabel.trim() !== room.highLabel || cardsPerPlayer !== room.cardsPerPlayer;
+  const activePlayers = snapshot.players.filter((player) => player.active).length;
+  const startDisabledReason = !allValid
+    ? 'Complete the prompt, both scale labels, and number cards per player.'
+    : changed
+      ? 'Save your settings before starting the round.'
+      : activePlayers < 2
+        ? 'Invite at least one more player to start a round.'
+        : busy
+          ? 'Please wait for the current change to finish.'
+          : '';
   return <section className="online-panel">
     <div className="online-section-heading"><div><span className="online-label">ROOM SETTINGS</span><h2>Set the round.</h2></div><span className="online-chip">MODERATOR</span></div>
     <label className="online-field">Prompt<select value={prompts.some((prompt) => prompt.text === promptText) ? promptText : '__custom__'} onChange={(event) => { const choice = prompts.find((prompt) => prompt.text === event.target.value); if (choice) { setPromptText(choice.text); setLowLabel(choice.lowLabel); setHighLabel(choice.highLabel); } }}><option value="__custom__">Custom prompt</option>{prompts.map((prompt) => <option key={prompt.id} value={prompt.text}>{prompt.text}</option>)}</select></label>
     <label className="online-field">Prompt text<input value={promptText} maxLength={120} onChange={(event) => setPromptText(event.target.value)} /></label>
     <div className="online-two-fields"><label className="online-field">0 means<input value={lowLabel} maxLength={80} onChange={(event) => setLowLabel(event.target.value)} /></label><label className="online-field">100 means<input value={highLabel} maxLength={80} onChange={(event) => setHighLabel(event.target.value)} /></label></div>
     <label className="online-field">Number cards per player<select value={cardsPerPlayer} onChange={(event) => setCardsPerPlayer(Number(event.target.value))}>{[1,2,3,4,5].map((count) => <option key={count} value={count}>{count} {count === 1 ? 'card' : 'cards'} each</option>)}</select></label>
-    <div className="online-actions"><button className="button button-secondary" disabled={busy || !allValid || !changed} onClick={() => onSave({ promptText: promptText.trim(), lowLabel: lowLabel.trim(), highLabel: highLabel.trim(), cardsPerPlayer })}>Save settings</button><button className="button button-primary" disabled={busy || !allValid || snapshot.players.filter((player) => player.active).length < 2 || changed} onClick={onStart}>Start round →</button></div>
-    {changed && <p className="online-help">Save your settings before starting the round.</p>}
+    <div className="online-actions"><button className="button button-secondary" disabled={busy || !allValid || !changed} onClick={() => onSave({ promptText: promptText.trim(), lowLabel: lowLabel.trim(), highLabel: highLabel.trim(), cardsPerPlayer })}>Save settings</button><button className="button button-primary" disabled={Boolean(startDisabledReason)} aria-describedby={startDisabledReason ? 'online-start-reason' : undefined} onClick={onStart}>Start round →</button></div>
+    {startDisabledReason && <p id="online-start-reason" className="online-start-reason" role="status">{startDisabledReason}</p>}
   </section>;
 }
 
@@ -98,14 +108,22 @@ export function OnlineApp() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not connect.'); }
     finally { setBusy(false); }
   };
-  const mutate = async (action: 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave', body: Record<string, unknown> = {}) => {
+  const clearSession = () => {
+    requestEpoch.current += 1;
+    saveSession(null);
+    setSession(null);
+    setSnapshot(null);
+    setLoading(false);
+    setError('');
+  };
+  const mutate = async (action: 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave' | 'close', body: Record<string, unknown> = {}) => {
     if (!session) return false;
     requestEpoch.current += 1;
     setBusy(true); setError('');
     try {
       if (action === 'leave') {
         await gameRequest<{ left: true }>(action, body, session);
-        saveSession(null); setSession(null); setSnapshot(null);
+        clearSession();
         return true;
       } else {
         const next = await gameRequest<MutationResult>(action, body, session);
@@ -136,6 +154,10 @@ export function OnlineApp() {
     try { await navigator.clipboard.writeText(`${location.origin}/online?code=${room.code}`); }
     catch { setError('Copy this join link from your address bar.'); }
   };
+  const closeRoom = () => {
+    if (!room || !window.confirm(`Close room ${room.code} for everyone? This ends the game and removes all round cards and numbers.`)) return;
+    void mutate('close');
+  };
   const revealOrder = round?.lockedOrder ?? orderedCards.map((card) => card.id);
   const revealed = round && ['revealing','results'].includes(room?.status ?? '') ? round.revealIndex : 0;
   const actual = room?.status === 'results' ? [...orderedCards].sort((a, b) => (a.value ?? 0) - (b.value ?? 0)) : [];
@@ -147,7 +169,8 @@ export function OnlineApp() {
       {!session && <section className="online-welcome"><span className="eyebrow">A LITTLE GAME OF PERSPECTIVE</span><h1>See things differently, together.</h1><p>Create a room and invite friends, or join one with a four-letter code. Your number cards are yours alone until the reveal.</p><div className="online-entry-grid"><div className="online-panel"><span className="online-label">FIRST, YOUR NAME</span><label className="online-field">What should we call you?<input value={name} onChange={(event) => setName(event.target.value)} maxLength={24} placeholder="Your name" autoComplete="nickname" /></label><button className="button button-primary online-full-button" disabled={busy || !name.trim()} onClick={() => void begin('create')}>Create a game →</button></div><div className="online-panel"><span className="online-label">HAVE A CODE?</span><label className="online-field">Four-letter room code<input className="online-code-input" value={code} onChange={(event) => setCode(event.target.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,4))} maxLength={4} placeholder="ABCD" autoCapitalize="characters" /></label><button className="button button-secondary online-full-button" disabled={busy || !name.trim() || code.length !== 4} onClick={() => void begin('join')}>Join game →</button></div></div></section>}
       {session && loading && <section className="online-centered"><h1>Connecting to your room…</h1><p>Finding the latest game state.</p></section>}
       {room && snapshot && !loading && <section className="online-game">
-        <div className="online-topline"><div><span className="eyebrow">ROOM {room.code} · {room.status.toUpperCase()}</span><h1>{room.status === 'lobby' ? 'Gather your people.' : room.status === 'entry' ? 'Your private cards.' : room.status === 'sorting' ? 'Find the order.' : room.status === 'revealing' ? 'The reveal.' : 'How did you do?'}</h1></div></div>
+        <div className="online-topline"><div><span className="eyebrow">ROOM {room.code} · {room.status.toUpperCase()}</span><h1>{room.status === 'lobby' ? 'Gather your people.' : room.status === 'entry' ? 'Your private cards.' : room.status === 'sorting' ? 'Find the order.' : room.status === 'revealing' ? 'The reveal.' : room.status === 'closed' ? 'This room is closed.' : 'How did you do?'}</h1></div>{me?.isHost && room.status !== 'closed' && <button className="button button-secondary online-close-button" disabled={busy} onClick={closeRoom}>Close room</button>}</div>
+        {room.status === 'closed' && <section className="online-panel online-closed-panel"><p>The moderator closed this room. Its cards and private numbers have been removed.</p><button className="button button-primary" onClick={clearSession}>Back to home →</button></section>}
         {room.status === 'lobby' && <div className="online-lobby-grid"><section className="online-panel"><span className="online-label">INVITE FRIENDS</span><div className="online-code-display">{room.code}</div><button className="button button-secondary" onClick={() => void copyJoin()}>Copy join link</button><p className="online-help">Players enter this code at the same website. The room stays available for 24 hours after the last round action.</p><h2>In the lobby · {snapshot.players.filter((player) => player.active).length}</h2><div className="online-player-list">{snapshot.players.filter((player) => player.active).map((player) => <div key={player.id}><span className="player-avatar">{player.name.slice(0,1).toUpperCase()}</span><strong>{player.name}{player.id === me?.id ? ' · you' : ''}</strong>{player.id === room.hostPlayerId && <span className="online-chip">MODERATOR</span>}</div>)}</div>{!me?.isHost && <button className="text-button" onClick={() => void mutate('leave')}>Leave room</button>}</section>{me?.isHost ? <LobbySettings snapshot={snapshot} busy={busy} onSave={(values) => mutate('settings', values)} onStart={() => mutate('start')} /> : <section className="online-panel"><span className="online-label">ROUND SETTINGS</span><h2>Waiting for the moderator.</h2><p>{room.promptText}</p><p className="online-help">{room.cardsPerPlayer} {room.cardsPerPlayer === 1 ? 'number card' : 'number cards'} per player · {room.lowLabel} to {room.highLabel}</p></section>}</div>}
         {room.status === 'entry' && round && <><div className="online-prompt-banner"><span className="online-label">THE PROMPT</span><h2>{room.promptText}</h2><p>0 · {room.lowLabel} <span>100 · {room.highLabel}</span></p></div><div className="online-private-grid">{myCards.map((card) => <PrivateCard key={card.id} card={card} promptText={room.promptText} busy={busy} onSave={(id, clue) => mutate('clue', { cardId: id, clue })} />)}</div><div className="online-progress-panel"><div><strong>{completeCount} of {round.cards.length} clues submitted</strong><p>Everyone can edit their own clues until the order is locked.</p></div>{me?.isHost && <button className="button button-primary" disabled={busy || !allComplete} onClick={() => void mutate('sorting')}>Start sorting →</button>}</div></>}
         {room.status === 'sorting' && round && <><div className="online-prompt-banner"><span className="online-label">THE PROMPT</span><h2>{room.promptText}</h2><p>0 · {room.lowLabel} <span>100 · {room.highLabel}</span></p></div><p className="online-instruction">{me?.isHost ? 'Drag the clue cards from lowest to highest. Everyone sees the updated order.' : 'The moderator is arranging the clues. You can still edit your own clue below.'}</p><DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}><SortableContext items={orderedCards.map((card) => card.id)} strategy={horizontalListSortingStrategy}><div className="online-board">{orderedCards.map((card, index) => <ClueCard key={card.id} card={card} name={playerName(card.ownerId)} index={index} draggable={Boolean(me?.isHost)} />)}</div></SortableContext></DndContext>{me?.isHost && <div className="online-actions"><button className="button button-primary" disabled={busy || !allComplete} onClick={() => void mutate('lock', { order: orderedCards.map((card) => card.id) })}>Lock order & begin reveal →</button></div>}{myCards.length > 0 && <details className="online-edit-details"><summary>Edit your clues</summary><div className="online-private-grid">{myCards.map((card) => <PrivateCard key={card.id} card={card} promptText={room.promptText} busy={busy} onSave={(id, clue) => mutate('clue', { cardId: id, clue })} />)}</div></details>}</>}

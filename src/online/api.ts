@@ -1,6 +1,6 @@
 import type { OnlineSession, OnlineSnapshot } from './types';
 
-type Action = 'create' | 'join' | 'snapshot' | 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave';
+type Action = 'create' | 'join' | 'snapshot' | 'settings' | 'start' | 'clue' | 'sorting' | 'reorder' | 'lock' | 'reveal' | 'next' | 'leave' | 'close';
 export async function gameRequest<T>(action: Action, body: Record<string, unknown> = {}, session?: OnlineSession): Promise<T> {
   const response = await fetch('/api/game', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },

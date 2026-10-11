@@ -22,6 +22,11 @@
 .online-topline, .online-section-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
 .online-topline { margin-bottom: 28px; }
 .online-topline h1 { margin: 8px 0 0; font: 700 clamp(32px,4vw,44px)/1.2 var(--display); letter-spacing: -1px; }
+.online-close-button { flex: 0 0 auto; border-color: #d6b3a9; color: #8c3523; background: #fff7f3; }
+.online-close-button:hover { border-color: #bd8778; background: #fff0e9; }
+.online-start-reason { margin: 10px 0 0; color: #6e5b3b !important; font-size: 13px; line-height: 1.5; text-align: right; }
+.online-closed-panel { max-width: 620px; }
+.online-closed-panel p { margin: 0 0 22px; }
 .online-code-display { margin: 10px 0 18px; padding: 18px 24px; border: 1px dashed #99ad7e; border-radius: 12px; background: #eff4e7; font: 700 clamp(32px,5vw,48px) var(--mono); letter-spacing: .16em; text-align: center; color: #3f5b30; }
 .online-help { display: block; margin-top: 12px; color: #617158; font-size: 13px; line-height: 1.5; }
 .online-player-list { display: grid; gap: 10px; margin-top: 18px; }
@@ -80,4 +85,6 @@
   .online-clue-edit { flex-direction: column; }
   .online-clue-edit .button { align-self: flex-end; }
   .online-room-pill { font-size: 10px; }
+  .online-close-button { width: 100%; justify-content: center; }
+  .online-start-reason { text-align: left; }
 }
